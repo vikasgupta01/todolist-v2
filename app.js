@@ -1,5 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+
+const _ = require('lodash');
+
 // 1. require mongoose after running 'npm i mongoose'
 const mongoose = require("mongoose");
 
@@ -14,7 +17,7 @@ app.use(express.static("public"));
 
 
 // 2. Create new database inside mongoDB
-mongoose.connect("mongodb://localhost:27017/todolistDB", { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect("mongodb://localhost:27017/todolistDB", { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false});
 
 // 3. Create a new Schema (items-schema)
 const itemsSchema = new mongoose.Schema({
@@ -37,6 +40,19 @@ const item3 = new Item({
 });
 
 const defaultItems = [item1, item2, item3];
+
+
+// 5. Creating Custom lists using express route parameters
+
+const listSchema = new mongoose.Schema(
+    {
+        name: String,
+        items: [itemsSchema]
+    }
+)
+
+const List = mongoose.model("List", listSchema);
+
 
 // // we would move this section to root route instead with if-else statement to ensure it gets executed only once.
 // Item.insertMany(defaultItems, function(err) {
@@ -79,7 +95,7 @@ app.post("/", function (req, res) {
     // then redierct back to working route to render the new updated list.
 
     const itemName = req.body.newItem;
-    const listName = req.body.list;
+    const listName = _.capitalize(req.body.list);
 
     const newItem = new Item({
         name: itemName
@@ -88,7 +104,7 @@ app.post("/", function (req, res) {
     if (listName === "Today") {
         newItem.save(() => res.redirect('/'));
     } else {
-        List.findOne({name: listName}, function(err, foundList) {
+        List.findOne({ name: listName }, function (err, foundList) {
             foundList.items.push(newItem);
             foundList.save(() => res.redirect('/' + listName));
         })
@@ -102,34 +118,51 @@ app.post("/", function (req, res) {
 
 app.post("/delete", function (req, res) {
     const checkedItemId = req.body.checkbox;
-    console.log(checkedItemId);
+    const listName = _.capitalize(req.body.listName);
 
-    // we can also use findOneAndDelete() here without getting deprecation warning. 
-    // findOneAndDelete() will also return the deleted element in case we need it.
-    Item.deleteOne({ _id: checkedItemId }, function (err) {
-        if (err) {
-            console.log(err);
-        } else {
-            console.log("Item deleted successfully!");
-        }
-    });
-    res.redirect("/");
+    if (listName === "Today") {
+        // we can also use findOneAndDelete() here without getting deprecation warning. 
+        // findOneAndDelete() will also return the deleted element in case we need it.
+        Item.deleteOne({ _id: checkedItemId }, function (err) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log("Item deleted successfully!");
+                res.redirect('/');
+            }
+        });
+    } else {
+        List.findOne({ name: listName }, function (err, foundList) {
+            if (err) {
+                console.log(err);
+            } else {
+                // here we have to delete the element from inside the foundList.lists array.
+
+                // // Method 1 : Easy to understand.
+                // foundList.items.pull({ _id: checkedItemId });
+                // foundList.save(() => res.redirect('/' + listName));
+                // // watch tutorial : 348. Revisiting Lodash and Deleting Items from Custom ToDo Lists 
+                // // for a better way using $pull (of mongoDB) and findOneAndUpdate (of mongoose)
+                // // the code above also works, but it's not as efficient for nested arrays holding large amount of data, 
+                // // as we will have to run pull multiple times. Read for more : 
+                // // https://www.udemy.com/course/the-complete-web-development-bootcamp/learn/lecture/12385986#questions/11324130 
+
+
+                // Method 2 : More Efficient and recommended to use.
+                List.findOneAndUpdate({name: listName}, {$pull: {items: {_id: checkedItemId}}}, function(err, foundList){
+                    if (!err) {
+                        res.redirect('/' + listName);
+                    }
+                })
+            }
+        });
+    }
 });
 
 
-// 5. Creating Custom lists using express route parameters
-
-const listSchema = new mongoose.Schema(
-    {
-        name: String,
-        items: [itemsSchema]
-    }
-)
-
-const List = mongoose.model("List", listSchema);
 
 app.get("/:customListName", function (req, res) {
-    const customListName = req.params.customListName;
+    const customListName = _.capitalize(req.params.customListName);
 
     List.findOne({ name: customListName }, function (err, foundList) {
         if (!err) {
