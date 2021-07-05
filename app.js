@@ -76,17 +76,27 @@ app.post("/", function (req, res) {
 
     // save the posted item to a variable, create a new item using our pre-existing model, 
     // and save it to mongoDB database using save method of mongoose.
-    // then redierct back to home route to render the new updated list.
+    // then redierct back to working route to render the new updated list.
 
     const itemName = req.body.newItem;
+    const listName = req.body.list;
 
     const newItem = new Item({
         name: itemName
     });
 
-    newItem.save();
-    res.redirect("/");
-
+    if (listName === "Today") {
+        newItem.save(() => res.redirect('/'));
+    } else {
+        List.findOne({name: listName}, function(err, foundList) {
+            foundList.items.push(newItem);
+            foundList.save(() => res.redirect('/' + listName));
+        })
+        const list = new List({
+            name: listName,
+            items: defaultItems
+        });
+    }
 });
 
 
@@ -145,7 +155,7 @@ app.get("/:customListName", function (req, res) {
 
                 // res.redirect("/" + customListName);
             } else {
-                res.render("list", {listTitle: foundList.name, newListItems: foundList.items});
+                res.render("list", { listTitle: foundList.name, newListItems: foundList.items });
             }
         }
     });
