@@ -1,0 +1,33 @@
+<%- include("header") -%>
+    <div class="box" id="heading">
+        <h1>
+            <%= listTitle %>
+        </h1>
+    </div>
+
+    <div class="box">
+
+        <!-- use a for loop to render additions individually by looping through entire array -->
+        <% newListItems.forEach(function(newListItem) { %>
+            <div class="item">
+                <input type="checkbox">
+                <p>
+                    <%= newListItem.name %>
+                </p>
+            </div>
+            <% }); %>
+
+                <form class="item" action="/" method="POST">
+
+                    <!-- when the user adds a new item through the text input, it gets saved under the variable named 'newItem', 
+                            and we trigger a post request to the home route. Which will be caught by app.post method in app.js file.  -->
+                    <input type="text" name="newItem" placeholder="New Item" autocomplete="off">
+
+                    <button type="submit" name="list" value=<%=listTitle%>>+</button>
+                    <!-- Submit button is same for both routes "/" & "/work". And it'll redirect to "/" route irrspective of where we click it from.
+                    But since we have put name and value fields, it'll get passed further. And depending on it's value, we can apply logic in "/" route of app.js. -->
+
+                </form>
+    </div>
+
+    <%- include("footer") -%>
