@@ -87,16 +87,24 @@ app.post("/", function (req, res) {
     newItem.save();
     res.redirect("/");
 
-    // // add that item to our array items and redirect to required route.
-    // if (req.body.list === "Work") {
-    //     workItems.push(item);
-    //     res.redirect("/work");
-    // } else {
-    //     items.push(item);
-    //     res.redirect("/");
-    // }
 });
 
+
+app.post("/delete", function(req, res) {
+    const checkedItemId = req.body.checkbox;
+    console.log(checkedItemId);
+
+    // we can also use findOneAndDelete() here without getting deprecation warning. 
+    // findOneAndDelete() will also return the deleted element in case we need it.
+    Item.deleteOne({_id: checkedItemId}, function(err) {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log("Item deleted successfully!");
+        }
+    });
+    res.redirect("/");
+});
 
 app.get("/work", function (req, res) {
     res.render("list", { listTitle: "Work List", newListItems: workItems });
