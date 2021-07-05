@@ -55,7 +55,7 @@ app.get("/", function (req, res) {
             console.log(err);
         } else {
             if (foundItems.length === 0) {
-                Item.insertMany(defaultItems, function(err) {
+                Item.insertMany(defaultItems, function (err) {
                     if (err) {
                         console.log(err);
                     } else {
@@ -90,13 +90,13 @@ app.post("/", function (req, res) {
 });
 
 
-app.post("/delete", function(req, res) {
+app.post("/delete", function (req, res) {
     const checkedItemId = req.body.checkbox;
     console.log(checkedItemId);
 
     // we can also use findOneAndDelete() here without getting deprecation warning. 
     // findOneAndDelete() will also return the deleted element in case we need it.
-    Item.deleteOne({_id: checkedItemId}, function(err) {
+    Item.deleteOne({ _id: checkedItemId }, function (err) {
         if (err) {
             console.log(err);
         } else {
@@ -106,19 +106,52 @@ app.post("/delete", function(req, res) {
     res.redirect("/");
 });
 
-app.get("/work", function (req, res) {
-    res.render("list", { listTitle: "Work List", newListItems: workItems });
-})
 
-app.post("/work", function (req, res) {
-    const item = req.body.newItem;
-    workItems.push(item);
-    res.redirect("/work");
-})
+// 5. Creating Custom lists using express route parameters
 
-app.get("/about", function (req, res) {
-    res.render("about");
-})
+const listSchema = new mongoose.Schema(
+    {
+        name: String,
+        items: [itemsSchema]
+    }
+)
+
+const List = mongoose.model("List", listSchema);
+
+app.get("/:customListName", function (req, res) {
+    const customListName = req.params.customListName;
+
+    List.findOne({ name: customListName }, function (err, foundList) {
+        if (!err) {
+            if (!foundList) {
+                // create a new list
+                const list = new List({
+                    name: customListName,
+                    items: defaultItems
+                });
+
+                // list.save();
+                // Using just this save method creates multiple objects (in my case 3) on 1st execution
+                // This happens because JS doesn't wait for a line to finish before executing next lines.
+                // So it redirects to this route even before save method has executed, creating multiple objects.
+
+                // This can be dealt with in two ways. 
+                // 1. Use setTimeOut() function and give list.save() some time to get executed. (But this will make website slow)
+                // list.save();
+                // setTimeout(() => { res.redirect('/' + customListName);}, 100);
+
+                // 2. Mongoose's save method takes a callback function. So using it will do the trick in a cleaner way.
+                list.save(() => res.redirect('/' + customListName));
+
+                // res.redirect("/" + customListName);
+            } else {
+                res.render("list", {listTitle: foundList.name, newListItems: foundList.items});
+            }
+        }
+    });
+
+    // res.render("list", { listTitle: "Work List", newListItems: workItems });
+});
 
 
 // listen on port 3000 and console log that our server has been started.
