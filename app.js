@@ -73,16 +73,28 @@ app.get("/", function (req, res) {
 
 
 app.post("/", function (req, res) {
-    const item = req.body.newItem;
 
-    // add that item to our array items and redirect to required route.
-    if (req.body.list === "Work") {
-        workItems.push(item);
-        res.redirect("/work");
-    } else {
-        items.push(item);
-        res.redirect("/");
-    }
+    // save the posted item to a variable, create a new item using our pre-existing model, 
+    // and save it to mongoDB database using save method of mongoose.
+    // then redierct back to home route to render the new updated list.
+
+    const itemName = req.body.newItem;
+
+    const newItem = new Item({
+        name: itemName
+    });
+
+    newItem.save();
+    res.redirect("/");
+
+    // // add that item to our array items and redirect to required route.
+    // if (req.body.list === "Work") {
+    //     workItems.push(item);
+    //     res.redirect("/work");
+    // } else {
+    //     items.push(item);
+    //     res.redirect("/");
+    // }
 });
 
 
