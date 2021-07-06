@@ -17,7 +17,7 @@ app.use(express.static("public"));
 
 
 // 2. Create new database inside mongoDB
-mongoose.connect("mongodb://localhost:27017/todolistDB", { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false});
+mongoose.connect("mongodb+srv://vikasgupta01:EatKitkatPls@gettingstarted.g891c.mongodb.net/todolistDB", { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false});
 
 // 3. Create a new Schema (items-schema)
 const itemsSchema = new mongoose.Schema({
@@ -75,10 +75,11 @@ app.get("/", function (req, res) {
                     if (err) {
                         console.log(err);
                     } else {
-                        console.log("Default items inserted successfully!");
+                        // console.log("Default items inserted successfully!");
                     }
                 });
-                res.redirect("/");
+                // res.redirect("/");
+                setTimeout(() => { res.redirect('/');}, 20);
             } else {
                 res.render("list", { listTitle: "Today", newListItems: foundItems });
             }
@@ -127,8 +128,9 @@ app.post("/delete", function (req, res) {
             if (err) {
                 console.log(err);
             } else {
-                console.log("Item deleted successfully!");
-                res.redirect('/');
+                // console.log("Item deleted successfully!");
+                // res.redirect('/');
+                setTimeout(() => { res.redirect('/');}, 20);
             }
         });
     } else {
