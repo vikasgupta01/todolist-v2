@@ -200,6 +200,6 @@ app.get("/:customListName", function (req, res) {
 
 
 // listen on port 3000 and console log that our server has been started.
-app.listen(3000, function () {
+app.listen(process.env.PORT || 3000, function () {
     console.log("Server started on port 3000");
 });
